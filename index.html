@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIDEASY Streamer</title>
+    <style>
+        :root { --accent: #8B5CF6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Controls Section */
+        .controls { background: #1a1a1a; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+        input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: white; outline: none; }
+        button { background: var(--accent); border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        /* Responsive Player */
+        .player-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        .status { margin-top: 15px; font-size: 0.9rem; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>VIDEASY Portal</h2>
+
+    <div class="controls">
+        <select id="typeSelect" onchange="toggleInputs()">
+            <option value="movie">Movie</option>
+            <option value="tv">TV Show</option>
+            <option value="anime">Anime</option>
+        </select>
+
+        <input type="text" id="idInput" placeholder="TMDB/AniList ID (e.g. 299534)">
+        
+        <span id="tvInputs" style="display:none;">
+            <input type="number" id="seasonInput" placeholder="S" style="width: 50px;" value="1">
+            <input type="number" id="episodeInput" placeholder="E" style="width: 50px;" value="1">
+        </span>
+
+        <button onclick="updatePlayer()">Load Content</button>
+    </div>
+
+    <div class="player-wrapper">
+        <iframe id="mainPlayer" src="https://player.videasy.net/movie/299534?color=8B5CF6&overlay=true" frameborder="0" allowfullscreen allow="encrypted-media"></iframe>
+    </div>
+
+    <div class="status" id="watchStatus">Ready to watch.</div>
+</div>
+
+<script>
+    function toggleInputs() {
+        const type = document.getElementById('typeSelect').value;
+        const tvInputs = document.getElementById('tvInputs');
+        // Show Season/Episode inputs only for TV or Anime shows
+        tvInputs.style.display = (type === 'tv' || type === 'anime') ? 'inline-block' : 'none';
+    }
+
+    function updatePlayer() {
+        const type = document.getElementById('typeSelect').value;
+        const id = document.getElementById('idInput').value;
+        const season = document.getElementById('seasonInput').value;
+        const episode = document.getElementById('episodeInput').value;
+        const player = document.getElementById('mainPlayer');
+
+        if(!id) return alert("Please enter an ID!");
+
+        let newUrl = "";
+        if (type === 'movie') {
+            newUrl = `https://player.videasy.net/movie/${id}`;
+        } else if (type === 'tv') {
+            newUrl = `https://player.videasy.net/tv/${id}/${season}/${episode}`;
+        } else if (type === 'anime') {
+            // Check if user provided episode for anime
+            newUrl = episode ? `https://player.videasy.net/anime/${id}/${episode}` : `https://player.videasy.net/anime/${id}`;
+        }
+
+        // Add default styling parameters
+        newUrl += "?color=8B5CF6&overlay=true&episodeSelector=true&nextEpisode=true";
+        player.src = newUrl;
+    }
+
+    // Listen for progress from the player
+    window.addEventListener("message", function (event) {
+        try {
+            const data = JSON.parse(event.data);
+            if(data.progress) {
+                document.getElementById('watchStatus').innerText = `Watching: ${Math.round(data.progress)}% complete`;
+            }
+        } catch (e) {}
+    });
+</script>
+
+</body>
+</html>

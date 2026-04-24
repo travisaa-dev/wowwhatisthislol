@@ -3,60 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIDEASY Streamer</title>
+    <title>VIDEASY Portal</title>
     <style>
-        :root { --accent: #8B5CF6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
+        :root { --accent: #8B5CF6; --bg: #0f0f0f; --card: #1a1a1a; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
         
+        /* Header & Links */
+        .header { text-align: center; margin-bottom: 30px; }
+        .find-ids { margin-top: 10px; display: flex; justify-content: center; gap: 15px; }
+        .id-link { 
+            color: #aaa; text-decoration: none; font-size: 0.85rem; 
+            padding: 5px 12px; border: 1px solid #333; border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+        .id-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(139, 92, 246, 0.1); }
+
         /* Controls Section */
-        .controls { background: #1a1a1a; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
-        input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: white; outline: none; }
-        button { background: var(--accent); border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
+        .controls { background: var(--card); padding: 25px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; outline: none; font-size: 1rem; }
+        input:focus { border-color: var(--accent); }
+        button { background: var(--accent); border: none; cursor: pointer; font-weight: bold; transition: transform 0.1s, opacity 0.2s; padding: 12px 25px; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
 
         /* Responsive Player */
-        .player-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .player-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #222; }
         .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        .status { margin-top: 15px; font-size: 0.9rem; color: #888; }
+        .status { text-align: center; margin-top: 20px; font-size: 0.9rem; color: #666; }
+        b { color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>VIDEASY Portal</h2>
+    <div class="header">
+        <h1>VIDEASY Portal</h1>
+        <div class="find-ids">
+            <span>Find IDs here:</span>
+            <a href="https://www.themoviedb.org/" target="_blank" class="id-link">TMDB (Movies/TV)</a>
+            <a href="https://anilist.co/" target="_blank" class="id-link">AniList (Anime)</a>
+        </div>
+    </div>
 
     <div class="controls">
         <select id="typeSelect" onchange="toggleInputs()">
-            <option value="movie">Movie</option>
-            <option value="tv">TV Show</option>
-            <option value="anime">Anime</option>
+            <option value="movie">🎬 Movie</option>
+            <option value="tv">📺 TV Show</option>
+            <option value="anime">⛩️ Anime</option>
         </select>
 
-        <input type="text" id="idInput" placeholder="TMDB/AniList ID (e.g. 299534)">
+        <input type="text" id="idInput" placeholder="Enter ID (e.g. 299534)">
         
         <span id="tvInputs" style="display:none;">
-            <input type="number" id="seasonInput" placeholder="S" style="width: 50px;" value="1">
-            <input type="number" id="episodeInput" placeholder="E" style="width: 50px;" value="1">
+            <input type="number" id="seasonInput" placeholder="S" style="width: 60px;" value="1" min="1">
+            <input type="number" id="episodeInput" placeholder="E" style="width: 60px;" value="1" min="1">
         </span>
 
-        <button onclick="updatePlayer()">Load Content</button>
+        <button onclick="updatePlayer()">Watch Now</button>
     </div>
 
     <div class="player-wrapper">
         <iframe id="mainPlayer" src="https://player.videasy.net/movie/299534?color=8B5CF6&overlay=true" frameborder="0" allowfullscreen allow="encrypted-media"></iframe>
     </div>
 
-    <div class="status" id="watchStatus">Ready to watch.</div>
+    <div id="watchStatus" class="status">Waiting for input...</div>
 </div>
 
 <script>
     function toggleInputs() {
         const type = document.getElementById('typeSelect').value;
         const tvInputs = document.getElementById('tvInputs');
-        // Show Season/Episode inputs only for TV or Anime shows
+        // Show Season/Episode inputs for TV or Anime
         tvInputs.style.display = (type === 'tv' || type === 'anime') ? 'inline-block' : 'none';
+        
+        // Update placeholder based on type
+        const idInput = document.getElementById('idInput');
+        if(type === 'anime') idInput.placeholder = "AniList ID";
+        else idInput.placeholder = "TMDB ID";
     }
 
     function updatePlayer() {
@@ -66,7 +91,10 @@
         const episode = document.getElementById('episodeInput').value;
         const player = document.getElementById('mainPlayer');
 
-        if(!id) return alert("Please enter an ID!");
+        if(!id) {
+            alert("Please enter a valid ID first!");
+            return;
+        }
 
         let newUrl = "";
         if (type === 'movie') {
@@ -74,21 +102,22 @@
         } else if (type === 'tv') {
             newUrl = `https://player.videasy.net/tv/${id}/${season}/${episode}`;
         } else if (type === 'anime') {
-            // Check if user provided episode for anime
-            newUrl = episode ? `https://player.videasy.net/anime/${id}/${episode}` : `https://player.videasy.net/anime/${id}`;
+            newUrl = `https://player.videasy.net/anime/${id}/${episode}`;
         }
 
-        // Add default styling parameters
-        newUrl += "?color=8B5CF6&overlay=true&episodeSelector=true&nextEpisode=true";
+        // Apply customization parameters
+        newUrl += "?color=8B5CF6&overlay=true&episodeSelector=true&nextEpisode=true&autoplayNextEpisode=true";
+        
         player.src = newUrl;
+        document.getElementById('watchStatus').innerHTML = `Loading <b>${type.toUpperCase()}</b> ID: <b>${id}</b>...`;
     }
 
-    // Listen for progress from the player
+    // Progress Listener
     window.addEventListener("message", function (event) {
         try {
             const data = JSON.parse(event.data);
             if(data.progress) {
-                document.getElementById('watchStatus').innerText = `Watching: ${Math.round(data.progress)}% complete`;
+                document.getElementById('watchStatus').innerHTML = `Progress: <b>${Math.round(data.progress)}%</b>`;
             }
         } catch (e) {}
     });
